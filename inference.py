@@ -253,7 +253,7 @@ if __name__ == '__main__':
     # generated output.
     llm_response = llm_inferencer.generate_audio_response(
         audio,
-        additional_text_prompt="Summarize the following article in 3 sentences or less",
+        # additional_text_prompt="summarize the following article in 3 sentences or less",
         max_new_tokens=512,
     )
 
