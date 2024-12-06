@@ -258,5 +258,8 @@ if __name__ == '__main__':
     )
 
     print("LLM Response:\n")
-    print(llm_response)
+    # split llm response to paragraphs and print the first one
+    llm_response = llm_response.split("\n")
+    print(llm_response[0])
+    
 
