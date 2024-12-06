@@ -7,6 +7,8 @@ from transformers import LlamaTokenizer, AutoTokenizer, HubertForCTC
 from model.audio_encoder import AudioEncoder
 from model.audio_llama import AudioLlamaForCausalLM
 from utils import merge_prompt_tokens, PROMPT_PREFIX, PROMPT_SUFFIX
+import pandas as pd
+from tqdm import tqdm
 
 
 class LLMSpeechTextInference():
@@ -187,6 +189,35 @@ class LLMSpeechTextInference():
 
         return llm_response
 
+def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,audio_ids:list(str),output_file_path:str):
+    # Select device for running models.
+    device = torch.device(f"cuda:{gpu_idx}" if torch.cuda.is_available() else "cpu")
+
+    # Set up inferencer.
+    config = OmegaConf.load(config)
+    llm_inferencer = LLMSpeechTextInference(
+        config=config,
+        audio_encoder_checkpoint=audio_encoder_checkpoint_path,
+        device=device,
+    )
+    summaries = []
+    for id in tqdm(audio_ids):
+        # Load audio file.
+        audio, sr = librosa.load(f"{audio_dir}/{id}.wav", sr=16000)
+
+        # Generate LLM response.
+        # NOTE: Generating the response in this way sometimes leads to the LLM repeating a
+        # chunk of text over and over. You can manually get around this by cropping the
+        # generated output.
+        llm_response = llm_inferencer.generate_audio_response(
+            audio,
+            max_new_tokens=512,
+        )
+        summaries.append((id,llm_response))
+    
+    df = pd.DataFrame(summaries,columns=["id","summary"])
+    df.to_csv(output_file_path,index = False)    
+    
 
 if __name__ == '__main__':
     """
