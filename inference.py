@@ -189,7 +189,7 @@ class LLMSpeechTextInference():
 
         return llm_response
 
-def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,audio_ids:list(str),output_file_path:str):
+def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,audio_ids:list[str],output_file_path:str):
     # Select device for running models.
     device = torch.device(f"cuda:{gpu_idx}" if torch.cuda.is_available() else "cpu")
 
