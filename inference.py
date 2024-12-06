@@ -190,6 +190,21 @@ class LLMSpeechTextInference():
         return llm_response
 
 def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,audio_ids:list[str],output_file_path:str):
+    """
+    Perform multiple inferences on audio files and generate summaries using LLMSpeechTextInference.
+
+    Args:
+        config_path (str): Path to the configuration file.
+        gpu_idx (int): Index of the GPU to use for running models.
+        audio_encoder_checkpoint_path (str): Path to the audio encoder checkpoint.
+        audio_dir (str): Directory containing the audio files.
+        audio_ids (list[str]): List of audio file IDs.
+        output_file_path (str): Path to the output file where the summaries will be saved.
+
+    Returns:
+        None
+    """
+    
     # Select device for running models.
     device = torch.device(f"cuda:{gpu_idx}" if torch.cuda.is_available() else "cpu")
 
@@ -211,12 +226,14 @@ def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path
         # generated output.
         llm_response = llm_inferencer.generate_audio_response(
             audio,
+            additional_text_prompt="Summarize the following article in 3 sentences or less",
             max_new_tokens=512,
         )
-        summaries.append((id,llm_response))
+        llm_response = llm_response.split("\n")
+        summaries.append((id,llm_response[0]))
     
     df = pd.DataFrame(summaries,columns=["id","summary"])
-    df.to_csv(output_file_path,index = False)    
+    df.to_csv(output_file_path,index = False)
     
 
 if __name__ == '__main__':
