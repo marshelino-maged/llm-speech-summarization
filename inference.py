@@ -209,7 +209,7 @@ def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path
     device = torch.device(f"cuda:{gpu_idx}" if torch.cuda.is_available() else "cpu")
 
     # Set up inferencer.
-    config = OmegaConf.load(config)
+    config = OmegaConf.load(config_path)
     llm_inferencer = LLMSpeechTextInference(
         config=config,
         audio_encoder_checkpoint=audio_encoder_checkpoint_path,
