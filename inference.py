@@ -236,15 +236,14 @@ def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path
     df.to_csv(output_file_path,index = False)
 def user_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,user_prompt:str="Summarize the following article in 3 sentences or less"):
     """
-    Perform multiple inferences on audio files and generate summaries using LLMSpeechTextInference.
+    Perform inference using LLMSpeechTextInference model to generate a response based on audio input and user prompt.
 
     Args:
         config_path (str): Path to the configuration file.
-        gpu_idx (int): Index of the GPU to use for running models.
+        gpu_idx (int): Index of the GPU to use for running the models.
         audio_encoder_checkpoint_path (str): Path to the audio encoder checkpoint.
-        audio_dir (str): Directory containing the audio files.
-        audio_ids (list[str]): List of audio file IDs.
-        output_file_path (str): Path to the output file where the summaries will be saved.
+        audio_dir (str): Path to the audio file.
+        user_prompt (str, optional): User prompt for generating the response. Defaults to "Summarize the following article in 3 sentences or less".
 
     Returns:
         None
