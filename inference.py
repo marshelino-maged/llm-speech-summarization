@@ -189,7 +189,7 @@ class LLMSpeechTextInference():
 
         return llm_response
 
-def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,audio_ids:list[str],output_file_path:str):
+def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,audio_ids:list[str],output_file_path:str,user_prompt:str="Summarize the following article in 3 sentences or less"):
     """
     Perform multiple inferences on audio files and generate summaries using LLMSpeechTextInference.
 
@@ -226,7 +226,7 @@ def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path
         # generated output.
         llm_response = llm_inferencer.generate_audio_response(
             audio,
-            additional_text_prompt="Summarize the following article in 3 sentences or less",
+            additional_text_prompt=user_prompt,
             max_new_tokens=512,
         )
         llm_response = llm_response.split("\n")
