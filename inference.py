@@ -234,6 +234,46 @@ def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path
     
     df = pd.DataFrame(summaries,columns=["id","summary"])
     df.to_csv(output_file_path,index = False)
+def user_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,user_prompt:str="Summarize the following article in 3 sentences or less"):
+    """
+    Perform multiple inferences on audio files and generate summaries using LLMSpeechTextInference.
+
+    Args:
+        config_path (str): Path to the configuration file.
+        gpu_idx (int): Index of the GPU to use for running models.
+        audio_encoder_checkpoint_path (str): Path to the audio encoder checkpoint.
+        audio_dir (str): Directory containing the audio files.
+        audio_ids (list[str]): List of audio file IDs.
+        output_file_path (str): Path to the output file where the summaries will be saved.
+
+    Returns:
+        None
+    """
+    
+    # Select device for running models.
+    device = torch.device(f"cuda:{gpu_idx}" if torch.cuda.is_available() else "cpu")
+
+    # Set up inferencer.
+    config = OmegaConf.load(config_path)
+    llm_inferencer = LLMSpeechTextInference(
+        config=config,
+        audio_encoder_checkpoint=audio_encoder_checkpoint_path,
+        device=device,
+    )
+    # Load audio file.
+    audio, sr = librosa.load(f"{audio_dir}", sr=16000)
+
+    # Generate LLM response.
+    # NOTE: Generating the response in this way sometimes leads to the LLM repeating a
+    # chunk of text over and over. You can manually get around this by cropping the
+    # generated output.
+    
+    llm_response = llm_inferencer.generate_audio_response(
+        audio,
+        additional_text_prompt=user_prompt,
+        max_new_tokens=512,
+    )
+    print(llm_response)
     
 
 if __name__ == '__main__':
