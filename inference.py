@@ -116,7 +116,8 @@ class LLMSpeechTextInference():
 
     def generate_text_response(self, input_text, max_new_tokens=256):
         # Create full prompt for instruction-tuned LLM.
-        full_text_prompt = f"{PROMPT_PREFIX} {input_text}{PROMPT_SUFFIX} "
+        # full_text_prompt = f"{PROMPT_PREFIX} {input_text}{PROMPT_SUFFIX} "
+        full_text_prompt = input_text
 
         with torch.no_grad():
             # Tokenize and get embeddings for the full text prompt.
