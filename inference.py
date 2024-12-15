@@ -235,13 +235,45 @@ def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path
     df = pd.DataFrame(summaries,columns=["id","summary"])
     df.to_csv(output_file_path,index = False)
 
-model_loaded = False
-def user_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,user_prompt:str=""):
-    
-    # Select device for running models.
-    if(not model_loaded):
-        llm_inferencer = load_model(config_path, gpu_idx, audio_encoder_checkpoint_path)
-        model_loaded = True
+def load_model(config_path, gpu_idx, audio_encoder_checkpoint_path)->LLMSpeechTextInference:
+    """
+    Loads the LLMSpeechTextInference model with the specified configuration, GPU index, and audio encoder checkpoint path.
+
+    Args:
+        config_path (str): The path to the configuration file.
+        gpu_idx (int): The index of the GPU to use for inference.
+        audio_encoder_checkpoint_path (str): The path to the audio encoder checkpoint.
+
+    Returns:
+        LLMSpeechTextInference: The loaded LLMSpeechTextInference model.
+    """
+    device = torch.device(f"cuda:{gpu_idx}" if torch.cuda.is_available() else "cpu")
+
+    # Set up inferencer.
+    config = OmegaConf.load(config_path)
+    llm_inferencer = LLMSpeechTextInference(
+        config=config,
+        audio_encoder_checkpoint=audio_encoder_checkpoint_path,
+        device=device,
+    )
+
+    return llm_inferencer
+
+def user_inference(llm_inferencer:LLMSpeechTextInference,audio_dir:str,user_prompt:str=""):
+    """
+    Perform inference using LLMSpeechTextInference model.
+
+    Args:
+        llm_inferencer (LLMSpeechTextInference): The LLMSpeechTextInference model.
+        audio_dir (str): The directory path of the audio file.
+        user_prompt (str, optional): Additional text prompt for the model. Defaults to "".
+
+    Returns:
+        None
+    """
+    if(llm_inferencer is None):
+        print("Please load the model first")
+        return
     # Load audio file.
     audio, sr = librosa.load(f"{audio_dir}", sr=16000)
 
@@ -257,18 +289,7 @@ def user_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str
     )
     print(llm_response)
 
-def load_model(config_path, gpu_idx, audio_encoder_checkpoint_path):
-    device = torch.device(f"cuda:{gpu_idx}" if torch.cuda.is_available() else "cpu")
 
-        # Set up inferencer.
-    config = OmegaConf.load(config_path)
-    llm_inferencer = LLMSpeechTextInference(
-            config=config,
-            audio_encoder_checkpoint=audio_encoder_checkpoint_path,
-            device=device,
-        )
-    
-    return llm_inferencer
     
 
 if __name__ == '__main__':
