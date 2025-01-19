@@ -292,6 +292,7 @@ def user_inference(llm_inferencer:LLMSpeechTextInference,audio_dir:str,user_prom
         max_new_tokens=512,
     )
     print(llm_response)
+    torch.cuda.empty_cache()
 
 
     
