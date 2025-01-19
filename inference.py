@@ -190,7 +190,7 @@ class LLMSpeechTextInference():
                 device=self.device,
             )
             llm_response = self.generate_llm_response(prompt_emb_sequence, max_new_tokens)[0]
-            torch.cuda.empty_cache()
+
         return llm_response
 
 def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path:str,audio_dir:str,audio_ids:list[str],output_file_path:str,user_prompt:str="Summarize the following article in 3 sentences or less"):
