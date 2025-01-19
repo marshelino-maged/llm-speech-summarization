@@ -39,10 +39,13 @@ class LLMSpeechTextInference():
         print("Loaded LLM.\n")
 
         # Load HuBERT ASR model for getting CTC offsets.
-        self.hubert_tokenizer = AutoTokenizer.from_pretrained("facebook/hubert-large-ls960-ft")
-        self.hubert = HubertForCTC.from_pretrained("facebook/hubert-large-ls960-ft").to(device)
-        self.hubert.to(self.device)
-        print("Loaded HuBERT.\n")
+        if (self.audio_encoder.downsample_method == "ctc_pool"):
+            self.hubert_tokenizer = AutoTokenizer.from_pretrained("facebook/hubert-large-ls960-ft")
+            self.hubert = HubertForCTC.from_pretrained("facebook/hubert-large-ls960-ft").to(device)
+            self.hubert.to(self.device)
+            print("Loaded HuBERT.\n")
+        
+        print("done")
 
     def perform_hubert_asr(self, audio):
         # Feed audio through model to get greedily predicted transcription IDs.
