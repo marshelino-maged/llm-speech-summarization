@@ -12,15 +12,15 @@ from tqdm import tqdm
 
 
 class LLMSpeechTextInference():
-    def __init__(self, config, audio_encoder_checkpoint, device):
+    def __init__(self, config, audio_encoder_checkpoint, devices):
         self.config = config
-        self.device = device
+        self.devices = devices
 
         # Audio encoder.
         checkpoint = torch.load(audio_encoder_checkpoint, map_location="cpu")
         self.audio_encoder = AudioEncoder(self.config)
         self.audio_encoder.load_state_dict(checkpoint)
-        self.audio_encoder.eval().to(self.device)
+        self.audio_encoder.eval().to(self.devices[0])
         print("Loaded audio encoder.\n")
 
         # LLM tokenizer.
@@ -35,14 +35,14 @@ class LLMSpeechTextInference():
             use_cache=True,
             torch_dtype=torch.float16,
         ).eval()
-        self.llm.to(self.device)
+        self.llm.to(self.devices[1])
         print("Loaded LLM.\n")
 
         # Load HuBERT ASR model for getting CTC offsets.
         if (self.audio_encoder.downsample_method == "ctc_pool"):
             self.hubert_tokenizer = AutoTokenizer.from_pretrained("facebook/hubert-large-ls960-ft")
-            self.hubert = HubertForCTC.from_pretrained("facebook/hubert-large-ls960-ft").to(device)
-            self.hubert.to(self.device)
+            self.hubert = HubertForCTC.from_pretrained("facebook/hubert-large-ls960-ft").to(devices[0])
+            self.hubert.to(self.devices[0])
             print("Loaded HuBERT.\n")
         
         print("done")
@@ -126,7 +126,7 @@ class LLMSpeechTextInference():
             # Tokenize and get embeddings for the full text prompt.
             prompt_input_ids = self.llm_tokenizer(
                 full_text_prompt, return_tensors='pt'
-            ).input_ids.to(self.device)
+            ).input_ids.to(self.devices[1])
             prompt_embeds = self.llm.model.embed_tokens(prompt_input_ids)
 
             # Generate the LLM response.
@@ -140,7 +140,7 @@ class LLMSpeechTextInference():
     def generate_asr_cascade_response(self, audio, additional_text_prompt="", max_new_tokens=256):
         with torch.no_grad():
             # Perform ASR using HuBERT.
-            audio_tensor = torch.tensor(audio).float().unsqueeze(0).to(self.device)
+            audio_tensor = torch.tensor(audio).float().unsqueeze(0).to(self.devices)
             asr_transcript = self.perform_hubert_asr(audio_tensor)
 
             # Combine the transcript with any additional text prompt.
@@ -153,7 +153,7 @@ class LLMSpeechTextInference():
 
     def generate_audio_response(self, audio, additional_text_prompt="", max_new_tokens=256):
         with torch.no_grad():
-            audio_tensor = torch.tensor(audio).float().unsqueeze(0).to(self.device)
+            audio_tensor = torch.tensor(audio).float().unsqueeze(0).to(self.devices[0])
 
             if self.audio_encoder.downsample_method == "ctc_pool":
                 # Get the CTC pooling ranges for the audio.
@@ -163,6 +163,7 @@ class LLMSpeechTextInference():
                 audio_embeds = self.audio_encoder(audio_tensor, [ctc_pool_ranges])
             else:
                 audio_embeds = self.audio_encoder(audio_tensor, ctc_pool_ranges=None)
+            audio_embeds = audio_embeds.to(self.devices[1]) 
 
             # Combine the audio embeddings with any additional text prompt.
             # NOTE: Currently assumes that the text prompt always comes before
@@ -172,7 +173,7 @@ class LLMSpeechTextInference():
                 # Take elements [1:] to remove start of sentence token.
                 additional_text_input_ids = self.llm_tokenizer(
                     additional_text_prompt, return_tensors='pt'
-                ).input_ids[:, 1:].to(self.device)
+                ).input_ids[:, 1:].to(self.devices[1])
 
                 # Get embeddings corresponding to additional text prompt and
                 # concatenate with audio embeddings.
@@ -187,7 +188,7 @@ class LLMSpeechTextInference():
                 inputs_embeds=combined_embeds,
                 tokenizer=self.llm_tokenizer,
                 embed_tokens=self.llm.model.embed_tokens,
-                device=self.device,
+                device=self.devices[1],
             )
             llm_response = self.generate_llm_response(prompt_emb_sequence, max_new_tokens)[0]
 
@@ -217,7 +218,7 @@ def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path
     llm_inferencer = LLMSpeechTextInference(
         config=config,
         audio_encoder_checkpoint=audio_encoder_checkpoint_path,
-        device=device,
+        devices=device,
     )
     summaries = []
     for id in tqdm(audio_ids):
@@ -251,14 +252,15 @@ def load_model(config_path, gpu_idx, audio_encoder_checkpoint_path)->LLMSpeechTe
     Returns:
         LLMSpeechTextInference: The loaded LLMSpeechTextInference model.
     """
-    device = torch.device(f"cuda:{gpu_idx}" if torch.cuda.is_available() else "cpu")
+    device1 = torch.device(f"cuda:{gpu_idx}" if torch.cuda.is_available() else "cpu")
+    device2 = torch.device(f"cuda:{gpu_idx+1}" if torch.cuda.is_available() else "cpu")
 
     # Set up inferencer.
     config = OmegaConf.load(config_path)
     llm_inferencer = LLMSpeechTextInference(
         config=config,
         audio_encoder_checkpoint=audio_encoder_checkpoint_path,
-        device=device,
+        devices=[device1,device2],
     )
 
     return llm_inferencer
@@ -319,7 +321,7 @@ if __name__ == '__main__':
     llm_inferencer = LLMSpeechTextInference(
         config=config,
         audio_encoder_checkpoint=args.audio_encoder_checkpoint,
-        device=device,
+        devices=device,
     )
 
     # Load audio file.
