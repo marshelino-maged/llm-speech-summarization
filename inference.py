@@ -282,8 +282,8 @@ def user_inference(llm_inferencer:LLMSpeechTextInference,audio_dir:str,user_prom
         None
     """
     if(llm_inferencer is None):
-        print("Please load the model first")
-        return
+        # print("Please load the model first")
+        return "Error, please load the model first"
     # Load audio file.
     audio, sr = librosa.load(f"{audio_dir}", sr=16000)
 
@@ -297,7 +297,8 @@ def user_inference(llm_inferencer:LLMSpeechTextInference,audio_dir:str,user_prom
         additional_text_prompt=user_prompt,
         max_new_tokens=512,
     )
-    print(llm_response)
+    # print(llm_response)
+    return llm_response
     torch.cuda.empty_cache()
 
 
