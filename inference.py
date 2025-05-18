@@ -190,10 +190,10 @@ class LLMSpeechTextInference():
                 embed_tokens=self.llm.model.embed_tokens,
                 device=self.devices[1],
             )
-            print(f"combined_embeds:\n{combined_embeds}")
-            print(f"combined_embeds shape:\n{combined_embeds.shape}")
-            print(f"prompt_emb_sequence:\n{prompt_emb_sequence}")
-            print(f"prompt_emb_sequence shape:\n{prompt_emb_sequence.shape}")
+            # print(f"combined_embeds:\n{combined_embeds}")
+            # print(f"combined_embeds shape:\n{combined_embeds.shape}")
+            # print(f"prompt_emb_sequence:\n{prompt_emb_sequence}")
+            # print(f"prompt_emb_sequence shape:\n{prompt_emb_sequence.shape}")
             llm_response = self.generate_llm_response(prompt_emb_sequence, max_new_tokens)[0]
 
         return llm_response
