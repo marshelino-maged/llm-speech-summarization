@@ -19,7 +19,7 @@ class LLMSpeechTextInference():
         # Audio encoder.
         checkpoint = torch.load(audio_encoder_checkpoint, map_location="cpu")
         self.audio_encoder = AudioEncoder(self.config)
-        self.audio_encoder.load_state_dict(checkpoint)
+        self.audio_encoder.load_state_dict(checkpoint["audio_encoder"])
         self.audio_encoder.eval().to(self.devices[0])
         print("Loaded audio encoder.\n")
 
@@ -222,7 +222,7 @@ def multiple_inference(config_path:str,gpu_idx:int,audio_encoder_checkpoint_path
     llm_inferencer = LLMSpeechTextInference(
         config=config,
         audio_encoder_checkpoint=audio_encoder_checkpoint_path,
-        devices=device,
+        devices=[device,device],
     )
     summaries = []
     for id in tqdm(audio_ids):
@@ -264,7 +264,7 @@ def load_model(config_path, gpu_idx, audio_encoder_checkpoint_path)->LLMSpeechTe
     llm_inferencer = LLMSpeechTextInference(
         config=config,
         audio_encoder_checkpoint=audio_encoder_checkpoint_path,
-        devices=[device1,device2],
+        devices=[device1,device1],
     )
 
     return llm_inferencer
@@ -326,7 +326,7 @@ if __name__ == '__main__':
     llm_inferencer = LLMSpeechTextInference(
         config=config,
         audio_encoder_checkpoint=args.audio_encoder_checkpoint,
-        devices=device,
+        devices=[device,device],
     )
 
     # Load audio file.
