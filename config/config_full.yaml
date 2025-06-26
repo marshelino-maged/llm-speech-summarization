@@ -12,7 +12,7 @@ data:
   ]
 model:
   audio_encoder:
-    type: utter-project/mHuBERT-147
+    type: facebook/hubert-large-ls960-ft
     downsample_method: pool  ###
     downsample_factor: 4
     pooling:
