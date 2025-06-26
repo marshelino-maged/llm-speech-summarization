@@ -19,7 +19,7 @@ class LLMSpeechTextInference():
         # Audio encoder.
         checkpoint = torch.load(audio_encoder_checkpoint, map_location="cpu")
         self.audio_encoder = AudioEncoder(self.config)
-        self.audio_encoder.load_state_dict(checkpoint["audio_encoder"])
+        self.audio_encoder.load_state_dict(checkpoint)
         self.audio_encoder.eval().to(self.devices[0])
         print("Loaded audio encoder.\n")
 
